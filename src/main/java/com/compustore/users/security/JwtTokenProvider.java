@@ -5,23 +5,26 @@ import javax.crypto.SecretKey;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * Clase responsable de generar y validar tokens JWT.
- * Utiliza un secreto configurado en application.properties para firmar los tokens.
+ * Proveedor de utilidades para generar y validar tokens JWT.
  */
 @Component
 public class JwtTokenProvider {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     private final SecretKey key;
     private final long expirationMs;
 
     /**
-     * Constructor: inicializa la clave y el tiempo de expiración a partir de las propiedades.
+     * Constructor que inicializa la clave secreta y el tiempo de expiración.
      *
-     * @param secret       Clave secreta para firmar el token (debe tener longitud adecuada para HS256).
+     * @param secret       Clave secreta usada para firmar los JWT.
      * @param expirationMs Tiempo de expiración en milisegundos.
      */
     public JwtTokenProvider(
@@ -33,19 +36,25 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Genera un token JWT firmado con el usuario y el rol.
+     * Genera un token JWT con el usuario y rol especificados.
      *
-     * @param username Nombre del usuario autenticado.
+     * @param username Nombre de usuario.
      * @param role     Rol del usuario (ADMIN o CLIENT).
-     * @return Token JWT como String.
+     * @return Token JWT firmado.
+     * @throws IllegalArgumentException Si los parámetros son nulos o vacíos.
      */
     public String generateToken(String username, String role) {
         if (username == null || username.isBlank()) {
-            throw new IllegalArgumentException("Username cannot be null or empty when generating JWT");
+            throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        if (role == null || role.isBlank()) {
+            throw new IllegalArgumentException("Role cannot be null or empty");
         }
 
         Date now = new Date();
         Date exp = new Date(now.getTime() + expirationMs);
+
+        logger.debug("Generando token para usuario: {} con rol: {}", username, role);
 
         return Jwts.builder()
                 .subject(username)
@@ -59,14 +68,22 @@ public class JwtTokenProvider {
     /**
      * Valida y parsea un token JWT.
      *
-     * @param token Token JWT recibido.
-     * @return Claims del token si es válido.
-     * @throws JwtException si el token es inválido o ha expirado.
+     * @param token Token JWT.
+     * @return Los claims si el token es válido.
+     * @throws JwtException Si el token es inválido o ha expirado.
      */
     public Jws<Claims> validate(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token);
+        try {
+            return Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token);
+        } catch (ExpiredJwtException e) {
+            logger.warn("El token JWT ha expirado: {}", e.getMessage());
+            throw e;
+        } catch (JwtException e) {
+            logger.error("Error al validar token JWT: {}", e.getMessage());
+            throw e;
+        }
     }
 }
