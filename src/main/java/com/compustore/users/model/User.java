@@ -1,15 +1,12 @@
 package com.compustore.users.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 /**
- * Entidad que representa a un usuario del sistema.
+ * Entidad que representa a un usuario en el sistema.
+ * Contiene información de autenticación, rol y fechas de creación/actualización.
  */
 @Getter
 @Setter
@@ -18,50 +15,54 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @Table(
-        name = "users",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_user_username", columnNames = "username"),
-                @UniqueConstraint(name = "uk_user_email", columnNames = "email")
-        }
+    name = "users",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_username", columnNames = "username"),
+        @UniqueConstraint(name = "uk_user_email", columnNames = "email")
+    }
 )
 public class User {
 
+    /** Identificador único del usuario (autogenerado). */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "El nombre de usuario es obligatorio")
-    @Size(max = 50, message = "El username no puede exceder 50 caracteres")
+    /** Nombre de usuario único (obligatorio). */
     @Column(nullable = false, length = 50)
     private String username;
 
-    @NotBlank(message = "La contraseña es obligatoria")
+    /** Contraseña encriptada (obligatoria). */
     @Column(nullable = false)
     private String password;
 
-    @Email(message = "Debe proporcionar un email válido")
-    @Size(max = 120, message = "El email no puede exceder 120 caracteres")
+    /** Correo electrónico único (opcional). */
     @Column(length = 120)
     private String email;
 
-    @NotBlank(message = "El rol es obligatorio")
+    /** Rol del usuario (ADMIN o CLIENT). */
     @Column(nullable = false, length = 20)
-    private String role; // ADMIN | CLIENT
+    private String role;
 
+    /** Estado de activación del usuario. */
     @Column(nullable = false)
     private Boolean enabled = true;
 
+    /** Fecha de creación del usuario. */
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    /** Fecha de última actualización. */
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /** Se ejecuta antes de insertar un nuevo registro para establecer las fechas iniciales. */
     @PrePersist
     void prePersist() {
         createdAt = updatedAt = LocalDateTime.now();
     }
 
+    /** Se ejecuta antes de actualizar un registro para refrescar la fecha de actualización. */
     @PreUpdate
     void preUpdate() {
         updatedAt = LocalDateTime.now();
