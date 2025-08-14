@@ -3,37 +3,41 @@ package com.compustore.users.repository;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.compustore.users.model.User;
 
 /**
- * Repositorio JPA para operaciones CRUD sobre la entidad {@link User}.
+ * Repositorio JPA para la entidad {@link User}.
+ * Proporciona métodos para buscar usuarios por username o email.
  */
-@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
-     * Busca un usuario por su nombre de usuario.
+     * Busca un usuario por su username.
      * 
-     * @param username nombre de usuario
-     * @return Optional con el usuario encontrado o vacío si no existe
+     * @param username nombre de usuario.
+     * @return Optional con el usuario si existe.
      */
     Optional<User> findByUsername(String username);
 
     /**
-     * Verifica si existe un usuario con el nombre de usuario dado.
-     *
-     * @param username nombre de usuario
-     * @return true si existe, false en caso contrario
+     * Verifica si existe un usuario con el username especificado.
      */
     boolean existsByUsername(String username);
 
     /**
-     * Verifica si existe un usuario con el email dado.
-     *
-     * @param email correo electrónico
-     * @return true si existe, false en caso contrario
+     * Verifica si existe un usuario con el email especificado.
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Busca un usuario con username o email (útil para login flexible).
+     *
+     * @param keyword username o email a buscar.
+     * @return Optional con el usuario si existe.
+     */
+    @Query("SELECT u FROM User u WHERE u.username = :keyword OR u.email = :keyword")
+    Optional<User> findByUsernameOrEmail(@Param("keyword") String keyword);
 }
