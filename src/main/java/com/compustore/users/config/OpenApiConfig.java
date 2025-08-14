@@ -1,19 +1,37 @@
 package com.compustore.users.config;
 
-import io.swagger.v3.oas.models.*;
-import io.swagger.v3.oas.models.info.*;
-import io.swagger.v3.oas.models.security.*;
-import org.springframework.context.annotation.*;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class OpenApiConfig {
+
   @Bean
   public OpenAPI usersOpenAPI() {
     return new OpenAPI()
-      .info(new Info().title("CompuStore Users API").version("v1")
-        .description("Autenticación y emisión de JWT"))
+      .info(new Info()
+        .title("CompuStore - Users Service API")
+        .version("v1")
+        .description("""
+          API para autenticación de usuarios y emisión de tokens JWT.
+          <br/>Incluye registro, login y obtención de perfil.
+          <br/><b>Roles soportados:</b> ADMIN y CLIENT.
+          """)
+        .license(new License().name("Apache 2.0").url("http://springdoc.org")))
       .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
-      .components(new Components().addSecuritySchemes("bearerAuth",
-        new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")));
+      .components(new Components()
+        .addSecuritySchemes("bearerAuth",
+          new SecurityScheme()
+            .type(SecurityScheme.Type.HTTP)
+            .scheme("bearer")
+            .bearerFormat("JWT")
+            .description("Introduce aquí el token sin la palabra 'Bearer '")) // Ayuda visual en Swagger
+      );
   }
 }
